@@ -35,7 +35,7 @@ describe('I18nProvider', () => {
     container.remove();
   });
 
-  it('renders English by default and switches locale', async () => {
+  it('renders English by default and switches locale and document.documentElement.lang', async () => {
     await act(async () => {
       root.render(
         <I18nProvider>
@@ -46,6 +46,7 @@ describe('I18nProvider', () => {
 
     expect(container.querySelector('#locale')?.textContent).toBe('en');
     expect(container.querySelector('#text')?.textContent).toBe('How it works');
+    expect(document.documentElement.lang).toBe('en');
 
     await act(async () => {
       (container.querySelector('#switch') as HTMLButtonElement).click();
@@ -53,6 +54,22 @@ describe('I18nProvider', () => {
 
     expect(container.querySelector('#locale')?.textContent).toBe('tr');
     expect(container.querySelector('#text')?.textContent).toBe('Nasıl çalışır');
+    expect(document.documentElement.lang).toBe('tr');
+    expect(document.cookie).toContain('alvinmunk_locale=tr');
+  });
+
+  it('respects initialLocale prop for SSR hydration', async () => {
+    await act(async () => {
+      root.render(
+        <I18nProvider initialLocale="tr">
+          <Consumer />
+        </I18nProvider>,
+      );
+    });
+
+    expect(container.querySelector('#locale')?.textContent).toBe('tr');
+    expect(container.querySelector('#text')?.textContent).toBe('Nasıl çalışır');
+    expect(document.documentElement.lang).toBe('tr');
   });
 
   it('mounts without throwing even if window.localStorage getter throws', async () => {
