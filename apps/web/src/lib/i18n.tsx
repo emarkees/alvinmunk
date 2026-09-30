@@ -71,6 +71,15 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 
 const STORAGE_KEY = 'alvinmunk_locale';
 
+function writeLocaleCookie(l: Locale) {
+  if (typeof document === 'undefined') return;
+  try {
+    document.cookie = `${STORAGE_KEY}=${l}; path=/; max-age=31536000; SameSite=Lax`;
+  } catch {
+    // Ignore storage restrictions
+  }
+}
+
 function readStoredLocale(): Locale {
   if (typeof window === 'undefined') return 'en';
   const stored = getItem(STORAGE_KEY);
@@ -80,17 +89,33 @@ function readStoredLocale(): Locale {
   return lang === 'tr' ? 'tr' : 'en';
 }
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  // Start with 'en' to avoid hydration mismatch; swap after mount.
-  const [locale, setLocaleState] = useState<Locale>('en');
+export function I18nProvider({
+  children,
+  initialLocale = 'en',
+}: {
+  children: ReactNode;
+  initialLocale?: Locale;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   useEffect(() => {
-    setLocaleState(readStoredLocale());
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = locale;
+    }
+  }, [locale]);
+
+  useEffect(() => {
+    const stored = readStoredLocale();
+    if (stored !== locale) {
+      setLocaleState(stored);
+      writeLocaleCookie(stored);
+    }
   }, []);
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
     setItem(STORAGE_KEY, l);
+    writeLocaleCookie(l);
   }, []);
 
   const t = useCallback<TFn>(
