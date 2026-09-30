@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import './globals.css';
 import { fontVars } from '@/lib/fonts';
 import { Starfield } from '@/components/brand/starfield';
@@ -10,7 +11,7 @@ import { AnalyticsProvider } from '@/components/analytics';
 import { ConfigStatusBanner } from '@/components/config-status-banner';
 import { WalletProvider } from '@/components/wallet/wallet-provider';
 import { MotionProvider } from '@/components/motion/motion-provider';
-import { I18nProvider } from '@/lib/i18n';
+import { I18nProvider, type Locale } from '@/lib/i18n';
 import { rootMetadata } from '@/lib/metadata';
 
 // Runs before first paint so the page never flashes the wrong theme: an explicit choice
@@ -20,25 +21,29 @@ const THEME_INIT = `(function(){try{var t=localStorage.getItem('alvinmunk.theme'
 
 export const metadata: Metadata = rootMetadata;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const rawLocale = cookieStore.get('alvinmunk_locale')?.value;
+  const initialLocale: Locale = rawLocale === 'tr' ? 'tr' : 'en';
+
   return (
-    <html lang="en" className={`${fontVars} dark`} suppressHydrationWarning>
+    <html lang={initialLocale} className={`${fontVars} dark`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
       </head>
       <body className="grain min-h-dvh" suppressHydrationWarning>
         <WalletProvider>
-          <I18nProvider>
-          <MotionProvider>
-          <SmoothScroll />
-          <Starfield />
-          <ConfigStatusBanner />
-          <Navbar />
-          <main className="min-h-[calc(100dvh-4rem)]">{children}</main>
-          <SiteFooter />
-          <Toaster />
-          <AnalyticsProvider />
-          </MotionProvider>
+          <I18nProvider initialLocale={initialLocale}>
+            <MotionProvider>
+              <SmoothScroll />
+              <Starfield />
+              <ConfigStatusBanner />
+              <Navbar />
+              <main className="min-h-[calc(100dvh-4rem)]">{children}</main>
+              <SiteFooter />
+              <Toaster />
+              <AnalyticsProvider />
+            </MotionProvider>
           </I18nProvider>
         </WalletProvider>
       </body>
