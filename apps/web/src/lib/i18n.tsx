@@ -80,13 +80,13 @@ function writeLocaleCookie(l: Locale) {
   }
 }
 
-function readStoredLocale(): Locale {
-  if (typeof window === 'undefined') return 'en';
+function readStoredLocale(): Locale | null {
+  if (typeof window === 'undefined') return null;
   const stored = getItem(STORAGE_KEY);
   if (stored === 'en' || stored === 'tr') return stored;
   // Auto-detect from browser language if no preference stored yet.
   const lang = navigator.language?.slice(0, 2).toLowerCase();
-  return lang === 'tr' ? 'tr' : 'en';
+  return lang === 'tr' ? 'tr' : null;
 }
 
 export function I18nProvider({
@@ -106,9 +106,11 @@ export function I18nProvider({
 
   useEffect(() => {
     const stored = readStoredLocale();
-    if (stored !== locale) {
+    if (stored && stored !== locale) {
       setLocaleState(stored);
       writeLocaleCookie(stored);
+    } else if (!stored && initialLocale) {
+      writeLocaleCookie(initialLocale);
     }
   }, []);
 

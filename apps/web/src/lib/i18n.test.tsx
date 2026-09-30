@@ -22,7 +22,9 @@ describe('I18nProvider', () => {
   let root: Root;
 
   beforeEach(() => {
-    localStorage.clear();
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.clear();
+    }
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
